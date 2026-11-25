@@ -124,7 +124,7 @@
     },
     {
       "id": "byte-nulo",
-      "descripcion": "ast.parse no acepta un byte nulo: medido el 25-Nov-2026 en 3.12.13 y 3.14.8 sale como SyntaxError en las cuatro posiciones probadas; otras versiones del parser lo dan como ValueError. Quien no captura ninguno de los dos no devuelve un veredicto, devuelve un traceback.",
+      "descripcion": "ast.parse no acepta un byte nulo: medido el 25-Nov-2026 sale como ValueError en 3.9.6 y como SyntaxError en 3.11.18, 3.12.16, 3.13.18 y 3.14.8. Quien no captura ninguno de los dos no devuelve un veredicto, devuelve un traceback.",
       "a": {
         "f2.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_01_x(self):\n        pass\n"
       },

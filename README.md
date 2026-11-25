@@ -87,8 +87,9 @@ marco**. Aquí no se puede escribir.
 1. Working tree, no historia: lee archivos, no un repositorio. La parte git la
    pone quien lo llama (los dos paquetes hermanos).
 2. Un archivo que no compila es `NO_MEDIDO`, nunca "cero métodos". En 3.11 un
-   byte nulo llega como `SyntaxError` en 3.12.13 y 3.14.8, y como `ValueError` en
-   otras versiones del parser; ambas se atrapan.
+   byte nulo llega como `ValueError` en 3.9.6 y como `SyntaxError` en 3.11.18,
+   3.12.16, 3.13.18 y 3.14.8 (medido 25-Nov-2026, también en el log de CI); se
+   atrapan las dos, y dentro de `>=3.11` sólo la segunda se midió alcanzable.
 3. Sólo `def test*` con `ast`. Un test generado por metaprogramación no se ve.
 4. El corpus fija el predicado, no el gusto de cada proyecto: un equipo que
    numere distinto debe cambiar el corpus, no el código, y decirlo.
