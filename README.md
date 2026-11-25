@@ -26,7 +26,8 @@ que impide publicar una cifra sin su marco.
 Cero dependencias. `python >= 3.11`.
 
 ```console
-$ uvx --from composicion-core composicion-core --self-test
+$ pip install git+https://github.com/alexisromtz-lab/composicion-core@v0.2.0
+$ composicion-core --self-test
 composicion-core: 12 rojo · 10 aviso · 10 no_medido · 10 identico · 0 discrepancias · 0 no comparables
 SELF-TEST OK: 42 acuerdos sobre 14 casos
 ```
@@ -116,6 +117,9 @@ su motivo escrito, en vez de puntuar un cero que no midió.
 7. `rc` es 0/1/2. Un 2 es *no medido*, no *verde*.
 
 ## Uso
+
+No hay wheel en PyPI todavía: `pip install composicion-core` por nombre corto **no
+resuelve**. La instalación reproducible es la URL de repositorio con su tag, como arriba.
 
 ```console
 $ composicion-core                                  # 14 casos contra el propio núcleo
