@@ -5,7 +5,7 @@ from .marco import MarcoIncompleto, ResultadoMedido
 from .ordinal import AVISO, ROJO, Colision, Fuente, Metodo, colisiones, comparar, leer, nuevos, ordinal
 from .paridad import Discrepancia, Puntuacion, Sonda, puntuar
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 __all__ = [
     "AVISO",

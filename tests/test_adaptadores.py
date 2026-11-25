@@ -63,5 +63,14 @@ class TestHermanos(unittest.TestCase):
         )
 
 
+class TestVersion(unittest.TestCase):
+    def test_la_version_tiene_una_sola_fuente(self):
+        # Los dos hermanos ya publicaron una versión con __init__ y pyproject divergentes.
+        texto = (pathlib.Path(__file__).resolve().parents[1] / "pyproject.toml").read_text()
+        self.assertIn('dynamic = ["version"]', texto)
+        self.assertNotRegex(texto, r'(?m)^version = "')
+        self.assertIn('attr = "composicion_core.__version__"', texto)
+
+
 if __name__ == "__main__":
     unittest.main()

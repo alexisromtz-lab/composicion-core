@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "composicion-core"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Predicado canonico de colision de tests entre ramas git, con corpus de conformidad y contrato de marco declarado."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -19,6 +19,9 @@ classifiers = [
 
 [project.scripts]
 composicion-core = "composicion_core.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "composicion_core.__version__" }
 
 [tool.setuptools]
 packages = ["composicion_core"]
