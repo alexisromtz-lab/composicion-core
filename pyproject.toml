@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "composicion-core"
+version = "0.1.0"
+description = "Predicado canonico de colision de tests entre ramas git, con corpus de conformidad y contrato de marco declarado."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = []
+keywords = ["testing", "git", "merge", "ast", "conformance", "agents"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Quality Assurance",
+  "Topic :: Software Development :: Version Control :: Git",
+]
+
+[project.scripts]
+composicion-core = "composicion_core.cli:main"
+
+[tool.setuptools]
+packages = ["composicion_core"]
+
+[tool.setuptools.package-data]
+composicion_core = ["corpus/*.json"]

@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "casos": [
+    {
+      "id": "canario-20-a-1",
+      "descripcion": "19 pares heredados del ancestro común + 1 colisión real: el predicado ingenuo dispara 20, el filtrado por base dispara 1.",
+      "base": {
+        "tests/test_x.py": "import unittest\n\n\nclass Caso(unittest.TestCase):\n    def test_01_heredado(self):\n        pass\n\n    def test_02_heredado(self):\n        pass\n\n    def test_03_heredado(self):\n        pass\n\n    def test_04_heredado(self):\n        pass\n\n    def test_05_heredado(self):\n        pass\n\n    def test_06_heredado(self):\n        pass\n\n    def test_07_heredado(self):\n        pass\n\n    def test_08_heredado(self):\n        pass\n\n    def test_09_heredado(self):\n        pass\n\n    def test_10_heredado(self):\n        pass\n\n    def test_11_heredado(self):\n        pass\n\n    def test_12_heredado(self):\n        pass\n\n    def test_13_heredado(self):\n        pass\n\n    def test_14_heredado(self):\n        pass\n\n    def test_15_heredado(self):\n        pass\n\n    def test_16_heredado(self):\n        pass\n\n    def test_17_heredado(self):\n        pass\n\n    def test_18_heredado(self):\n        pass\n\n    def test_19_heredado(self):\n        pass\n"
+      },
+      "a": {
+        "tests/test_x.py": "import unittest\n\n\nclass Caso(unittest.TestCase):\n    def test_01_heredado(self):\n        pass\n\n    def test_02_heredado(self):\n        pass\n\n    def test_03_heredado(self):\n        pass\n\n    def test_04_heredado(self):\n        pass\n\n    def test_05_heredado(self):\n        pass\n\n    def test_06_heredado(self):\n        pass\n\n    def test_07_heredado(self):\n        pass\n\n    def test_08_heredado(self):\n        pass\n\n    def test_09_heredado(self):\n        pass\n\n    def test_10_heredado(self):\n        pass\n\n    def test_11_heredado(self):\n        pass\n\n    def test_12_heredado(self):\n        pass\n\n    def test_13_heredado(self):\n        pass\n\n    def test_14_heredado(self):\n        pass\n\n    def test_15_heredado(self):\n        pass\n\n    def test_16_heredado(self):\n        pass\n\n    def test_17_heredado(self):\n        pass\n\n    def test_18_heredado(self):\n        pass\n\n    def test_19_heredado(self):\n        pass\n\n    def test_35_alfa(self):\n        self.assertTrue(True)\n"
+      },
+      "b": {
+        "tests/test_x.py": "import unittest\n\n\nclass Caso(unittest.TestCase):\n    def test_01_heredado(self):\n        pass\n\n    def test_02_heredado(self):\n        pass\n\n    def test_03_heredado(self):\n        pass\n\n    def test_04_heredado(self):\n        pass\n\n    def test_05_heredado(self):\n        pass\n\n    def test_06_heredado(self):\n        pass\n\n    def test_07_heredado(self):\n        pass\n\n    def test_08_heredado(self):\n        pass\n\n    def test_09_heredado(self):\n        pass\n\n    def test_10_heredado(self):\n        pass\n\n    def test_11_heredado(self):\n        pass\n\n    def test_12_heredado(self):\n        pass\n\n    def test_13_heredado(self):\n        pass\n\n    def test_14_heredado(self):\n        pass\n\n    def test_15_heredado(self):\n        pass\n\n    def test_16_heredado(self):\n        pass\n\n    def test_17_heredado(self):\n        pass\n\n    def test_18_heredado(self):\n        pass\n\n    def test_19_heredado(self):\n        pass\n\n    def test_01_nuevo(self):\n        pass\n\n    def test_02_nuevo(self):\n        pass\n\n    def test_03_nuevo(self):\n        pass\n\n    def test_04_nuevo(self):\n        pass\n\n    def test_05_nuevo(self):\n        pass\n\n    def test_06_nuevo(self):\n        pass\n\n    def test_07_nuevo(self):\n        pass\n\n    def test_08_nuevo(self):\n        pass\n\n    def test_09_nuevo(self):\n        pass\n\n    def test_10_nuevo(self):\n        pass\n\n    def test_11_nuevo(self):\n        pass\n\n    def test_12_nuevo(self):\n        pass\n\n    def test_13_nuevo(self):\n        pass\n\n    def test_14_nuevo(self):\n        pass\n\n    def test_15_nuevo(self):\n        pass\n\n    def test_16_nuevo(self):\n        pass\n\n    def test_17_nuevo(self):\n        pass\n\n    def test_18_nuevo(self):\n        pass\n\n    def test_19_nuevo(self):\n        pass\n\n    def test_35_beta(self):\n        self.assertTrue(True)\n"
+      },
+      "espera_rojos": [
+        [
+          "tests/test_x.py::Caso.test_35_alfa",
+          "tests/test_x.py::Caso.test_35_beta"
+        ]
+      ]
+    },
+    {
+      "id": "par-ordinal-misma-clase",
+      "descripcion": "Dos ramas numeran test_35 en la misma clase con nombre distinto. Merge limpio, numeración rota.",
+      "a": {
+        "f1.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_35_alfa(self):\n        pass\n"
+      },
+      "b": {
+        "f1.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_35_beta(self):\n        pass\n"
+      },
+      "espera_rojos": [
+        [
+          "f1.py::Suite.test_35_alfa",
+          "f1.py::Suite.test_35_beta"
+        ]
+      ]
+    },
+    {
+      "id": "mismo-nombre-sin-ordinal",
+      "descripcion": "def test_algo insertado por las dos ramas en puntos distintos de la misma clase: merge-tree RC 0 y Python conserva uno. Es el borrado silencioso.",
+      "a": {
+        "f1.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_algo(self):\n        self.assertEqual(1, 1)\n"
+      },
+      "b": {
+        "f1.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_algo(self):\n        self.assertEqual(2, 2)\n"
+      },
+      "espera_rojos": [
+        [
+          "f1.py::Suite.test_algo",
+          "f1.py::Suite.test_algo"
+        ]
+      ]
+    },
+    {
+      "id": "aviso-global",
+      "descripcion": "Mismo ordinal en clases distintas: no rompe la ejecución, degrada la trazabilidad.",
+      "a": {
+        "f1.py": "import unittest\n\n\nclass Alfa(unittest.TestCase):\n    def test_07_x(self):\n        pass\n"
+      },
+      "b": {
+        "f1.py": "import unittest\n\n\nclass Beta(unittest.TestCase):\n    def test_07_y(self):\n        pass\n"
+      },
+      "espera_avisos": [
+        [
+          "f1.py::Alfa.test_07_x",
+          "f1.py::Beta.test_07_y"
+        ]
+      ]
+    },
+    {
+      "id": "clase-anidada",
+      "descripcion": "La clase anidada lleva nombre punteado: A.B no es A ni B.",
+      "a": {
+        "f1.py": "class A(unittest.TestCase):\n    class B(unittest.TestCase):\n        def test_09_x(self):\n            pass\n"
+      },
+      "b": {
+        "f1.py": "class A(unittest.TestCase):\n    class B(unittest.TestCase):\n        def test_09_y(self):\n            pass\n"
+      },
+      "espera_rojos": [
+        [
+          "f1.py::A.B.test_09_x",
+          "f1.py::A.B.test_09_y"
+        ]
+      ]
+    },
+    {
+      "id": "clases-distintas-mismo-nombre",
+      "descripcion": "Mismo nombre en clases distintas no se pisa: son atributos de clases distintas.",
+      "a": {
+        "f1.py": "import unittest\n\n\nclass A(unittest.TestCase):\n    def test_1_x(self):\n        pass\n"
+      },
+      "b": {
+        "f1.py": "import unittest\n\n\nclass B(unittest.TestCase):\n    def test_1_x(self):\n        pass\n"
+      }
+    },
+    {
+      "id": "sin-ordinal-sin-colision",
+      "descripcion": "Sin ordinal y con nombres distintos no hay nada que comparar.",
+      "a": {
+        "f1.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_alfa(self):\n        pass\n"
+      },
+      "b": {
+        "f1.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_beta(self):\n        pass\n"
+      }
+    },
+    {
+      "id": "no-compila-sintaxis",
+      "descripcion": "Un archivo que no compila no tiene cero métodos: tiene métodos desconocidos. NO_MEDIDO, nunca lista vacía.",
+      "a": {
+        "f1.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_01_x(self):\n        pass\n",
+        "roto.py": "def roto(:\n"
+      },
+      "b": {
+        "f1.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_02_y(self):\n        pass\n",
+        "roto.py": "def roto(:\n"
+      },
+      "espera_no_medido": [
+        "roto.py"
+      ],
+      "canales": [
+        "no_medido"
+      ]
+    },
+    {
+      "id": "byte-nulo",
+      "descripcion": "ast.parse lanza ValueError con un byte nulo: quien no lo captura no devuelve un veredicto, devuelve un traceback.",
+      "a": {
+        "f2.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_01_x(self):\n        pass\n"
+      },
+      "b": {
+        "f2.py": "\u0000import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_02_y(self):\n        pass\n"
+      },
+      "espera_no_medido": [
+        "f2.py"
+      ],
+      "canales": [
+        "no_medido"
+      ]
+    },
+    {
+      "id": "duplicado-interno-de-una-rama",
+      "descripcion": "La rama ya trae dos test_06 en la misma clase: el defecto se coló en un merge anterior. Mismo predicado dentro que entre ramas.",
+      "a": {
+        "f3.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_05_alfa(self):\n        pass\n"
+      },
+      "b": {
+        "f3.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_06_x(self):\n        pass\n\n    def test_06_y(self):\n        pass\n"
+      },
+      "espera_rojos": [
+        [
+          "f3.py::Suite.test_06_x",
+          "f3.py::Suite.test_06_y"
+        ]
+      ],
+      "lados": 1
+    },
+    {
+      "id": "no-compila-sintaxis-veredicto",
+      "descripcion": "El mismo archivo ilegible, sin afirmar el canal NO_MEDIDO: nadie debe explotar ni inventar un veredicto.",
+      "a": {
+        "f1.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_01_x(self):\n        pass\n",
+        "roto.py": "def roto(:\n"
+      },
+      "b": {
+        "f1.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_02_y(self):\n        pass\n",
+        "roto.py": "def roto(:\n"
+      },
+      "canales": [
+        "rojo",
+        "aviso"
+      ]
+    },
+    {
+      "id": "byte-nulo-veredicto",
+      "descripcion": "Byte nulo sin afirmar NO_MEDIDO: aquí es donde un ast.parse sin ValueError deja un traceback en vez de un veredicto.",
+      "a": {
+        "f2.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_01_x(self):\n        pass\n"
+      },
+      "b": {
+        "f2.py": "\u0000import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_02_y(self):\n        pass\n"
+      },
+      "canales": [
+        "rojo",
+        "aviso"
+      ]
+    }
+  ]
+}
