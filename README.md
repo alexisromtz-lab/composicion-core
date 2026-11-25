@@ -1,5 +1,7 @@
 # composicion-core
 
+[![ci](https://github.com/alexisromtz-lab/composicion-core/actions/workflows/ci.yml/badge.svg)](https://github.com/alexisromtz-lab/composicion-core/actions/workflows/ci.yml) ![python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue) ![deps](https://img.shields.io/badge/dependencies-0-brightgreen) ![license](https://img.shields.io/badge/license-MIT-blue)
+
 Predicado canónico para una pregunta que `git merge` no contesta: **¿dos ramas
 declaran el mismo test?**
 
@@ -112,3 +114,13 @@ $ composicion-core --sonda governor --ruta /ruta/al/checkout --json
 - [merge-lattice-governor](https://github.com/alexisromtz-lab/merge-lattice-governor) — el orden en que N ramas pueden aterrizar sin romperse.
 
 MIT © 2026 Platino Labs.
+
+## La familia
+
+Tres paquetes con cero dependencias, probados en 3.11, 3.12 y 3.13:
+
+| paquete | qué contesta |
+|---|---|
+| [composicion-core](https://github.com/alexisromtz-lab/composicion-core) | ¿dos ramas declaran el mismo test? predicado + corpus + juez de paridad |
+| [py-test-shadow-guard](https://github.com/alexisromtz-lab/py-test-shadow-guard) | el test que el merge borra en silencio, en tu CI |
+| [merge-lattice-governor](https://github.com/alexisromtz-lab/merge-lattice-governor) | en qué orden aterrizar N ramas sin romper el trinquete |
