@@ -1,7 +1,7 @@
 """Adaptadores: la misma pregunta, hecha a cada implementación.
 
 Cada adaptador traduce el caso del corpus a la forma que la herramienta
-entiende. Los tres devuelven ``(rojos, avisos, no_medidos)`` como conjuntos de
+entiende. Los tres devuelven ``(rojos, avisos, no_medidos, identicos)`` como conjuntos de
 etiquetas, de modo que el orden en que cada una recorra sus pares no cuenta.
 """
 
@@ -11,7 +11,7 @@ import importlib
 import sys
 
 from .corpus import Caso, etiqueta
-from .ordinal import AVISO, ROJO, Fuente, colisiones, comparar, leer
+from .ordinal import AVISO, IDENTICO, ROJO, Fuente, colisiones, comparar, leer
 from .paridad import Sonda
 
 
@@ -19,13 +19,16 @@ def _fuentes(crudas: dict[str, str]) -> dict[str, Fuente]:
     return {ruta: leer(texto, ruta) for ruta, texto in crudas.items()}
 
 
-def evaluar_core(caso: Caso) -> tuple[frozenset[str], frozenset[str], frozenset[str]]:
+def evaluar_core(
+    caso: Caso,
+) -> tuple[frozenset[str], frozenset[str], frozenset[str], frozenset[str]]:
     a, b = _fuentes(caso.a), _fuentes(caso.b)
     r = comparar(_fuentes(caso.base or {}), {"a": a, "b": b})
     return (
         frozenset(etiqueta(c.clase, c.a.rotulo(), c.b.rotulo()) for c in r.rojos),
         frozenset(etiqueta(c.clase, c.a.rotulo(), c.b.rotulo()) for c in r.avisos),
         frozenset(clave.split("/", 1)[-1] for clave in r.no_medidos),
+        frozenset(etiqueta(c.clase, c.a.rotulo(), c.b.rotulo()) for c in r.identicos),
     )
 
 
@@ -45,7 +48,15 @@ def sonda_shadow_guard(nucleo) -> Sonda:
     def _lee(texto: str, ruta: str):
         return nucleo.leer(texto, ruta) if tiene_lectura else (nucleo.metodos(texto, ruta), None)
 
-    def evaluar(caso: Caso) -> tuple[frozenset[str], frozenset[str], frozenset[str]]:
+    # ``hasattr`` sobre una dataclass no ve los campos con ``default_factory``:
+    # el atributo de clase es un ``Field`` o no existe. Se pregunta al mapa.
+    identicos_disponibles = "identicos" in getattr(
+        getattr(nucleo, "Resultado", object), "__dataclass_fields__", {}
+    )
+
+    def evaluar(
+        caso: Caso,
+    ) -> tuple[frozenset[str], frozenset[str], frozenset[str], frozenset[str]]:
         no_medidos: set[str] = set()
 
         def _archivos(crudas: dict[str, str], prefijo: str = "") -> dict[str, list]:
@@ -63,6 +74,7 @@ def sonda_shadow_guard(nucleo) -> Sonda:
             frozenset(etiqueta(h.clase, h.a.rotulo(), h.b.rotulo()) for h in r.rojos),
             frozenset(etiqueta(h.clase, h.a.rotulo(), h.b.rotulo()) for h in r.avisos),
             frozenset(clave.split("/", 1)[-1] for clave in no_medidos),
+            frozenset(etiqueta(h.clase, h.a.rotulo(), h.b.rotulo()) for h in getattr(r, "identicos", ())),
         )
 
     return Sonda(
@@ -71,6 +83,7 @@ def sonda_shadow_guard(nucleo) -> Sonda:
         soporta_base=True,
         emite_avisos=True,
         emite_no_medido=tiene_lectura,
+        emite_identico=identicos_disponibles,
     )
 
 
@@ -86,11 +99,15 @@ def sonda_governor(sombra) -> Sonda:
     """
     tiene_nuevos = hasattr(sombra, "nuevos")
     tiene_lectura = hasattr(sombra, "leer")
+    tiene_identicos = hasattr(sombra, "identicos")
     con_nombre = "incluir_mismo_nombre" in getattr(sombra.colisiones, "__kwdefaults__", {}) or False
 
-    def evaluar(caso: Caso) -> tuple[frozenset[str], frozenset[str], frozenset[str]]:
+    def evaluar(
+        caso: Caso,
+    ) -> tuple[frozenset[str], frozenset[str], frozenset[str], frozenset[str]]:
         rojos: set[str] = set()
         ilegibles: set[str] = set()
+        identicos: set[str] = set()
         kwargs = {"incluir_mismo_nombre": True} if con_nombre else {}
 
         def _metodos(texto: str, ruta: str) -> list:
@@ -115,15 +132,26 @@ def sonda_governor(sombra) -> Sonda:
         def _anota(ruta: str, x, y) -> None:
             rojos.add(etiqueta(ROJO, f"{ruta}::{x.rotulo()}", f"{ruta}::{y.rotulo()}"))
 
+        def _anota_identico(ruta: str, x, y) -> None:
+            identicos.add(etiqueta(IDENTICO, f"{ruta}::{x.rotulo()}", f"{ruta}::{y.rotulo()}"))
+
+        def _identicos(ruta: str, a: list, b: list) -> None:
+            if tiene_identicos:
+                for x, y in sombra.identicos(a, b, **kwargs):
+                    _anota_identico(ruta, x, y)
+
         # Duplicado interno: el que pudo dejar un merge anterior dentro de la rama.
         for archivos in propios.values():
             for ruta, medidos in archivos.items():
                 for x, y in sombra.colisiones(medidos, medidos, **kwargs):
                     _anota(ruta, x, y)
+                _identicos(ruta, medidos, medidos)
         for ruta in sorted(set(caso.a) & set(caso.b)):
-            for x, y in sombra.colisiones(propios["a"].get(ruta, []), propios["b"].get(ruta, []), **kwargs):
+            izquierda, derecha = propios["a"].get(ruta, []), propios["b"].get(ruta, [])
+            for x, y in sombra.colisiones(izquierda, derecha, **kwargs):
                 _anota(ruta, x, y)
-        return frozenset(rojos), frozenset(), frozenset(ilegibles)
+            _identicos(ruta, izquierda, derecha)
+        return frozenset(rojos), frozenset(), frozenset(ilegibles), frozenset(identicos)
 
     return Sonda(
         "merge-lattice-governor",
@@ -131,6 +159,7 @@ def sonda_governor(sombra) -> Sonda:
         soporta_base=tiene_nuevos,
         emite_avisos=False,
         emite_no_medido=tiene_lectura,
+        emite_identico=tiene_identicos,
         audita_rama_sola=True,
     )
 

@@ -17,9 +17,9 @@ que impide publicar una cifra sin su marco.
 
 | pieza | qué hace |
 |---|---|
-| `composicion_core.ordinal` | `leer()` · `metodos()` · `nuevos()` · `colisiones()` · `comparar()` — tres reglas, un veredicto |
+| `composicion_core.ordinal` | `leer()` · `metodos()` · `nuevos()` · `colisiones()` · `comparar()` — cuatro reglas, un veredicto |
 | `composicion_core.marco` | `ResultadoMedido`: una deuda sin base y techo **no se puede construir** |
-| `composicion_core.corpus` | 12 casos ejecutables que declaran qué canales afirman y cuántos lados tienen |
+| `composicion_core.corpus` | 14 casos ejecutables que declaran qué canales afirman y cuántos lados tienen |
 | `composicion_core.paridad` | puntúa cualquier herramienta contra el corpus y separa discrepancia de *no comparable* |
 | `composicion_core.adaptadores` | sondas listas para `py-test-shadow-guard` y `merge-lattice-governor` |
 
@@ -27,14 +27,24 @@ Cero dependencias. `python >= 3.11`.
 
 ```console
 $ uvx --from composicion-core composicion-core --self-test
-composicion-core: 10 rojo · 10 aviso · 10 no_medido · 0 discrepancias · 0 no comparables
-SELF-TEST OK: 30 acuerdos sobre 12 casos
+composicion-core: 12 rojo · 10 aviso · 10 no_medido · 10 identico · 0 discrepancias · 0 no comparables
+SELF-TEST OK: 42 acuerdos sobre 14 casos
 ```
 
-## Las tres reglas
+## Las cuatro reglas
 
-1. **Misma clase, mismo nombre.** `ROJO`. Python sobrescribe el método: se pierde
-   un test. No es una convención, es el diccionario de la clase.
+1. **Misma clase, mismo nombre, cuerpo distinto.** `ROJO`. Python sobrescribe el
+   método: se pierde un test. No es una convención, es el diccionario de la
+   clase.
+
+   Un caso hermano que este predicado confundía: **mismo nombre y mismo cuerpo**
+   es `IDENTICO`, no `ROJO`. El merge deja el método repetido y las dos copias
+   son la misma función: no se pierde ningún test. Se publica en su propio canal
+   con su cuenta, para que un cero se lea como *mirado y no hay* y no como *no
+   se miró*. Medido el 26-Nov-2026 sobre 15 PRs reales (105 parejas): 75
+   hallazgos por nombre compartido y **75 cuerpos idénticos ⇒ 0 tests
+   perdidos**. Antes de esta regla, esa cifra se publicaba como 2 parejas en
+   colisión.
 2. **Misma clase, mismo ordinal, nombre distinto.** `ROJO`. No se pierde ningún
    test: los dos corren. Se marca porque el número es el mecanismo con el que
    varios autores —o varios agentes— se coordinan, y tras el merge dos creen ser
@@ -48,18 +58,19 @@ proyecto**.
 
 ## El corpus, y lo que mide de verdad
 
-Los 12 casos incluyen el canario real: dos ramas, 19 tests heredados del
+Los 14 casos incluyen el canario real: dos ramas, 19 tests heredados del
 ancestro común y una colisión intra-clase. El predicado ingenuo —comparar
 ordinales entre ramas— dispara **20** veces. El discriminado —misma clase,
 mismo ordinal, nombre distinto, ambos nuevos respecto de la base— dispara **1**.
 
-Medido el 25-Nov-2026 contra los dos paquetes hermanos:
+Medido el 26-Nov-2026 contra los dos paquetes hermanos, con el corpus de 14
+casos y los cuatro canales:
 
-| herramienta | rojo | aviso | no_medido | discrepancias | no comparables |
-|---|---|---|---|---|---|
-| `composicion-core` | 10 | 10 | 10 | 0 | 0 |
-| `py-test-shadow-guard` 0.1.2 | 10 | 10 | 10 | 0 | 0 |
-| `merge-lattice-governor` 0.1.2 | 9 | 9 | 9 | 0 | 1 |
+| herramienta | rojo | aviso | no_medido | identico | discrepancias | no comparables |
+|---|---|---|---|---|---|---|
+| `composicion-core` 0.2.0 | 12 | 10 | 10 | 10 | 0 | 0 |
+| `py-test-shadow-guard` 0.2.0 | 12 | 10 | 10 | 10 | 0 | 0 |
+| `merge-lattice-governor` 0.2.0 | 11 | 9 | 9 | 9 | 0 | 1 |
 
 La única fila no comparable del gobernador no es un verde: es su contrato,
 publicado. **No emite canal de avisos** —el aviso global de ordinal compartido
@@ -84,6 +95,10 @@ marco**. Aquí no se puede escribir.
 
 `NO_MEDIDO` (`valor=None`) exige `rc != 0`: nunca se degrada a cero.
 
+Un cuarto canal, `identico`, no es un estado del predicado sino del **alcance**
+de la herramienta: una sonda que no lo distingue se marca `NO_COMPARABLE` con
+su motivo escrito, en vez de puntuar un cero que no midió.
+
 ## Límites declarados
 
 1. Working tree, no historia: lee archivos, no un repositorio. La parte git la
@@ -103,17 +118,10 @@ marco**. Aquí no se puede escribir.
 ## Uso
 
 ```console
-$ composicion-core                                  # 12 casos contra el propio núcleo
+$ composicion-core                                  # 14 casos contra el propio núcleo
 $ composicion-core --sonda shadow-guard --ruta /ruta/al/checkout
 $ composicion-core --sonda governor --ruta /ruta/al/checkout --json
 ```
-
-## Familia
-
-- [py-test-shadow-guard](https://github.com/alexisromtz-lab/py-test-shadow-guard) — el defecto en una pareja de ramas.
-- [merge-lattice-governor](https://github.com/alexisromtz-lab/merge-lattice-governor) — el orden en que N ramas pueden aterrizar sin romperse.
-
-MIT © 2026 Platino Labs.
 
 ## La familia
 
@@ -124,3 +132,5 @@ Tres paquetes con cero dependencias, probados en 3.11, 3.12 y 3.13:
 | [composicion-core](https://github.com/alexisromtz-lab/composicion-core) | ¿dos ramas declaran el mismo test? predicado + corpus + juez de paridad |
 | [py-test-shadow-guard](https://github.com/alexisromtz-lab/py-test-shadow-guard) | el test que el merge borra en silencio, en tu CI |
 | [merge-lattice-governor](https://github.com/alexisromtz-lab/merge-lattice-governor) | en qué orden aterrizar N ramas sin romper el trinquete |
+
+MIT © 2026 Platino Labs.

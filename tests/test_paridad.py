@@ -15,6 +15,8 @@ def _caso(**extra):
         espera_rojos=ROJO,
         espera_avisos=frozenset(),
         espera_no_medido=frozenset(),
+        espera_identicos=frozenset(),
+        canales=frozenset({"rojo", "aviso", "no_medido"}),
     )
     base.update(extra)
     return Caso(**base)
@@ -23,7 +25,7 @@ def _caso(**extra):
 def _sonda(**extra):
     datos = dict(
         nombre="falsa",
-        evaluar=lambda caso: (ROJO, frozenset(), frozenset()),
+        evaluar=lambda caso: (ROJO, frozenset(), frozenset(), frozenset()),
     )
     datos.update(extra)
     return Sonda(**datos)
@@ -36,7 +38,7 @@ class TestPuntuacion(unittest.TestCase):
         self.assertEqual(q.acuerdos["rojo"], 1)
 
     def test_una_sonda_que_no_ve_nada_discrepa(self):
-        q = puntuar(_sonda(evaluar=lambda caso: (frozenset(), frozenset(), frozenset())), [_caso()])
+        q = puntuar(_sonda(evaluar=lambda caso: (frozenset(), frozenset(), frozenset(), frozenset())), [_caso()])
         self.assertEqual(q.rc, 1)
         self.assertEqual(q.discrepancias[0].tipo, "rojo")
 

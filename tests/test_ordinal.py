@@ -97,3 +97,45 @@ class TestComparar(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestDuplicadoIdentico(unittest.TestCase):
+    """Medido en 15 PRs reales (26-Nov-2026): 75 pares con el mismo nombre y
+    75 cuerpos idénticos. El predicado los llamaba colisión; ninguno pierde un
+    test. El canal ``identico`` los publica en vez de borrarlos."""
+
+    CUERPO = "class S:\n  def test_algo(self):\n    self.assertEqual(2 + 2, 4)\n"
+
+    def test_mismo_nombre_y_mismo_cuerpo_no_es_rojo(self):
+        a = leer(self.CUERPO, "t.py").metodos
+        b = leer(self.CUERPO, "t.py").metodos
+        pares = colisiones(a, b)
+        self.assertEqual([c.clase for c in pares], ["identico"])
+
+    def test_la_huella_no_depende_de_la_linea(self):
+        a = leer(self.CUERPO, "t.py").metodos
+        b = leer("\n\n\n" + self.CUERPO, "t.py").metodos
+        self.assertNotEqual(a[0].linea, b[0].linea)
+        self.assertEqual(a[0].huella, b[0].huella)
+        self.assertEqual(colisiones(a, b)[0].clase, "identico")
+
+    def test_un_cuerpo_distinto_sigue_siendo_rojo(self):
+        a = leer(self.CUERPO, "t.py").metodos
+        b = leer("class S:\n  def test_algo(self):\n    self.assertTrue(True)\n", "t.py").metodos
+        self.assertNotEqual(a[0].huella, b[0].huella)
+        self.assertEqual(colisiones(a, b)[0].clase, "rojo")
+
+    def test_sin_huella_no_se_absuelve(self):
+        # Un Metodo construido a mano no trae huella: ausencia de medición no es
+        # igualdad de cuerpos, así que el par sigue siendo rojo.
+        from composicion_core.ordinal import Metodo
+
+        a = [Metodo("t.py", "S", "test_algo", 3)]
+        b = [Metodo("t.py", "S", "test_algo", 9)]
+        self.assertEqual(colisiones(a, b)[0].clase, "rojo")
+
+    def test_el_veredicto_cuenta_los_identicos_y_no_los_esconde(self):
+        ramas = {"a": {"t.py": leer(self.CUERPO, "t.py")}, "b": {"t.py": leer(self.CUERPO, "t.py")}}
+        r = comparar({}, ramas)
+        self.assertEqual(r.rc, 0)
+        self.assertEqual(len(r.identicos), 1)

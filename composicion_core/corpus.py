@@ -11,7 +11,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from .ordinal import AVISO, ROJO
+from .ordinal import AVISO, IDENTICO, ROJO
 
 CORPUS = Path(__file__).with_name("corpus") / "casos.json"
 
@@ -26,7 +26,8 @@ class Caso:
     espera_rojos: frozenset[str] = frozenset()
     espera_avisos: frozenset[str] = frozenset()
     espera_no_medido: frozenset[str] = frozenset()
-    canales: frozenset[str] = frozenset(("rojo", "aviso", "no_medido"))
+    espera_identicos: frozenset[str] = frozenset()
+    canales: frozenset[str] = frozenset(("rojo", "aviso", "no_medido", "identico"))
     lados: int = 2
 
     @property
@@ -40,7 +41,7 @@ class Caso:
 
 def etiqueta(clase: str, rotulo_a: str, rotulo_b: str) -> str:
     """Identidad de un par, independiente del orden en que cada sonda lo emita."""
-    prefijo = "ROJO" if clase == ROJO else "AVISO"
+    prefijo = {ROJO: "ROJO", AVISO: "AVISO", IDENTICO: "IDENTICO"}[clase]
     return f"{prefijo}:{'~'.join(sorted((rotulo_a, rotulo_b)))}"
 
 
@@ -60,7 +61,8 @@ def carga(ruta: Path | None = None) -> list[Caso]:
             espera_rojos=_pares(d.get("espera_rojos", []), ROJO),
             espera_avisos=_pares(d.get("espera_avisos", []), AVISO),
             espera_no_medido=frozenset(d.get("espera_no_medido", [])),
-            canales=frozenset(d.get("canales", ("rojo", "aviso", "no_medido"))),
+            espera_identicos=_pares(d.get("espera_identicos", []), IDENTICO),
+            canales=frozenset(d.get("canales", ("rojo", "aviso", "no_medido", "identico"))),
             lados=int(d.get("lados", 2)),
         )
         for d in datos["casos"]

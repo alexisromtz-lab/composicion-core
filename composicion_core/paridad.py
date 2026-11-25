@@ -13,9 +13,9 @@ from typing import Callable
 
 from .corpus import Caso
 
-CANALES = ("rojo", "aviso", "no_medido")
+CANALES = ("rojo", "aviso", "no_medido", "identico")
 
-Evalua = Callable[[Caso], tuple[frozenset[str], frozenset[str], frozenset[str]]]
+Evalua = Callable[[Caso], tuple[frozenset[str], frozenset[str], frozenset[str], frozenset[str]]]
 
 
 @dataclass(frozen=True)
@@ -31,6 +31,7 @@ class Sonda:
     soporta_base: bool = True
     emite_avisos: bool = True
     emite_no_medido: bool = True
+    emite_identico: bool = True
     audita_rama_sola: bool = True
 
 
@@ -61,8 +62,8 @@ class Puntuacion:
     def lineas(self) -> list[str]:
         salida = [
             f"{self.sonda.nombre}: {self.acuerdos['rojo']} rojo · {self.acuerdos['aviso']} aviso · "
-            f"{self.acuerdos['no_medido']} no_medido · {len(self.discrepancias)} discrepancias · "
-            f"{len(self.no_comparables)} no comparables"
+            f"{self.acuerdos['no_medido']} no_medido · {self.acuerdos['identico']} identico · "
+            f"{len(self.discrepancias)} discrepancias · {len(self.no_comparables)} no comparables"
         ]
         for d in self.discrepancias:
             if d.tipo == "fallo":
@@ -98,6 +99,8 @@ def _capacidades(sonda: Sonda, caso: Caso) -> str | None:
         return "no tiene canal de avisos"
     if "no_medido" in caso.canales and caso.espera_no_medido and not sonda.emite_no_medido:
         return "no publica NO_MEDIDO"
+    if "identico" in caso.canales and caso.espera_identicos and not sonda.emite_identico:
+        return "no distingue el duplicado idéntico"
     return None
 
 
@@ -109,7 +112,7 @@ def puntuar(sonda: Sonda, casos: list[Caso]) -> Puntuacion:
             puntuacion.no_comparables.append((caso.id, motivo))
             continue
         try:
-            rojos, avisos, no_medidos = sonda.evaluar(caso)
+            rojos, avisos, no_medidos, identicos = sonda.evaluar(caso)
         except Exception as exc:  # una sonda que explota no es un veredicto
             puntuacion.discrepancias.append(
                 Discrepancia(caso.id, "fallo", detalle=f"{type(exc).__name__}: {exc}")
@@ -119,6 +122,7 @@ def puntuar(sonda: Sonda, casos: list[Caso]) -> Puntuacion:
             ("rojo", caso.espera_rojos, rojos),
             ("aviso", caso.espera_avisos, avisos),
             ("no_medido", caso.espera_no_medido, no_medidos),
+            ("identico", caso.espera_identicos, identicos),
         ):
             if canal not in caso.canales:
                 continue

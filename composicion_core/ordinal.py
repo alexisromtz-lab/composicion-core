@@ -7,9 +7,14 @@ el archivo con 42 ``def`` y 41 nombres distintos. Python conserva el último y e
 CI queda verde **con un test menos**. No es un conflicto textual: ninguna
 herramienta que sólo mire ``merge-tree`` puede verlo.
 
-De ahí las dos reglas del predicado, y por qué son dos:
+De ahí las reglas del predicado, y por qué son distintas:
 
-* **misma clase + mismo nombre** → ROJO. Es el borrado silencioso de arriba.
+* **misma clase + mismo nombre + cuerpo distinto** → ROJO. Es el borrado
+  silencioso de arriba. **Mismo nombre y mismo cuerpo** → ``IDENTICO``: el
+  merge deja el método repetido y las dos copias son la misma función, así que
+  no se pierde ningún test. Medido el 26-Nov-2026 sobre 15 PRs reales, este
+  predicado marcó 75 pares por nombre y **los 75 eran idénticos**: 75 falsos
+  positivos, 0 pérdidas.
 * **misma clase + mismo ordinal + nombre distinto** → ROJO *por política*, no
   por semántica: los dos métodos sobreviven y los dos corren. Lo que se rompe es
   la numeración, que es el mecanismo con el que se coordinan los autores y los
@@ -22,11 +27,20 @@ De ahí las dos reglas del predicado, y por qué son dos:
 Y una condición de honestidad: un archivo que no compila **no tiene cero
 métodos**, tiene métodos desconocidos. Por eso ``leer`` devuelve ``Fuente`` con
 ``error`` y el llamador debe publicar ``NO_MEDIDO``, no una lista vacía.
+
+Y una segunda condición, medida el 26-Nov-2026 sobre 15 PRs reales: mismo
+nombre **y mismo cuerpo** no es una pérdida. Dos ramas que añaden el mismo
+``def`` dejan el archivo con el método repetido y el merge conserva una copia
+idéntica; publicarlo como ROJO era un falso positivo de 75 sobre 75
+(``COLISION_SIMBOLICA_AST`` en 2 parejas, 0 tests perdidos). Por eso el canal
+``IDENTICO`` existe y se cuenta: un rojo que se descarta en silencio sería
+indistinguible de un predicado que no miró.
 """
 
 from __future__ import annotations
 
 import ast
+import hashlib
 import re
 from dataclasses import dataclass, field
 
@@ -34,6 +48,7 @@ _ORDINAL = re.compile(r"^test_?(\d+)")
 
 ROJO = "rojo"
 AVISO = "aviso"
+IDENTICO = "identico"
 
 
 def ordinal(nombre: str) -> int | None:
@@ -48,6 +63,7 @@ class Metodo:
     clase: str
     nombre: str
     linea: int
+    huella: str = ""
 
     @property
     def ordinal(self) -> int | None:
@@ -83,8 +99,15 @@ class Colision:
     motivo: str
 
     def rotulo(self) -> str:
-        etiqueta = "ROJO" if self.clase == ROJO else "AVISO"
+        etiquetas = {ROJO: "ROJO", AVISO: "AVISO", IDENTICO: "IDÉNTICO"}
+        etiqueta = etiquetas.get(self.clase, self.clase)
         return f"{etiqueta}  {self.a.rotulo()}  vs  {self.b.rotulo()}   ({self.motivo})"
+
+
+def _huella(nodo: ast.stmt) -> str:
+    """Digest del cuerpo del método: dos ``def`` con la misma huella no se pisan."""
+    crudo = ast.dump(nodo, annotate_fields=False, include_attributes=False)
+    return hashlib.sha256(crudo.encode("utf-8")).hexdigest()[:16]
 
 
 def _recorre(cuerpo: list[ast.stmt], prefijo: str, ruta: str, salida: list[Metodo]) -> None:
@@ -93,7 +116,7 @@ def _recorre(cuerpo: list[ast.stmt], prefijo: str, ruta: str, salida: list[Metod
             _recorre(nodo.body, f"{prefijo}{nodo.name}.", ruta, salida)
         elif isinstance(nodo, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if nodo.name.startswith("test"):
-                salida.append(Metodo(ruta, prefijo.rstrip("."), nodo.name, nodo.lineno))
+                salida.append(Metodo(ruta, prefijo.rstrip("."), nodo.name, nodo.lineno, _huella(nodo)))
 
 
 def leer(fuente: str, ruta: str) -> Fuente:
@@ -150,7 +173,20 @@ def colisiones(a: list[Metodo], b: list[Metodo]) -> list[Colision]:
                     )
                 continue
             if x.nombre == y.nombre:
-                encontradas.append(Colision(ROJO, x, y, "mismo nombre en la misma clase: el segundo borra al primero"))
+                if x.huella and x.huella == y.huella:
+                    encontradas.append(
+                        Colision(
+                            IDENTICO,
+                            x,
+                            y,
+                            "misma definición a ambos lados: el archivo queda con el "
+                            "método repetido y no se pierde ninguno",
+                        )
+                    )
+                else:
+                    encontradas.append(
+                        Colision(ROJO, x, y, "mismo nombre en la misma clase: el segundo borra al primero")
+                    )
             elif x.ordinal is not None and x.ordinal == y.ordinal:
                 encontradas.append(Colision(ROJO, x, y, f"ordinal {x.ordinal} en la misma clase, nombre distinto"))
     encontradas.sort(key=lambda c: (c.a.ruta, c.a.clase, c.a.ordinal or 0, c.a.nombre, c.b.nombre))
@@ -165,10 +201,16 @@ class Resultado:
     ingenuo: int
     no_medidos: list[str]
     motivos: dict[str, str] = field(default_factory=dict)
+    identicos: list[Colision] = field(default_factory=list)
 
     @property
     def rc(self) -> int:
         return 1 if self.rojos else 0
+
+
+def _cubo(clase: str, rojos: list, avisos: list, identicos: list) -> list:
+    """Cada veredicto a su cubeta: un canal nuevo no puede caer en ``avisos``."""
+    return {ROJO: rojos, AVISO: avisos}.get(clase, identicos)
 
 
 def comparar(
@@ -198,6 +240,7 @@ def comparar(
 
     rojos: list[Colision] = []
     avisos: list[Colision] = []
+    identicos: list[Colision] = []
     propios: dict[str, list[Metodo]] = {}
     for ref, archivos in ramas.items():
         lista: list[Metodo] = []
@@ -207,7 +250,9 @@ def comparar(
 
     for ref, lista in propios.items():
         for c in colisiones(lista, lista):
-            rojos.append(Colision(ROJO, c.a, c.b, f"duplicado dentro de {ref}"))
+            motivo = f"duplicado dentro de {ref}"
+            destino = _cubo(c.clase, rojos, avisos, identicos)
+            destino.append(Colision(c.clase, c.a, c.b, motivo))
 
     refs = list(ramas)
     for i, ref_a in enumerate(refs):
@@ -223,7 +268,7 @@ def comparar(
             else:
                 solo_a, solo_b = propios[ref_a], propios[ref_b]
             for c in colisiones(solo_a, solo_b):
-                (rojos if c.clase == ROJO else avisos).append(c)
+                _cubo(c.clase, rojos, avisos, identicos).append(c)
 
     ingenuo = 0
     for i, ref_a in enumerate(refs):
@@ -237,4 +282,12 @@ def comparar(
                         if x.ordinal is not None and x.ordinal == y.ordinal and x.nombre != y.nombre:
                             ingenuo += 1
 
-    return Resultado(rojos, avisos, {r: len(l) for r, l in propios.items()}, ingenuo, no_medidos, motivos)
+    return Resultado(
+        rojos,
+        avisos,
+        {r: len(l) for r, l in propios.items()},
+        ingenuo,
+        no_medidos,
+        motivos,
+        identicos,
+    )

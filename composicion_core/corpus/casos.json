@@ -184,6 +184,46 @@
         "rojo",
         "aviso"
       ]
+    },
+    {
+      "id": "duplicado-identico",
+      "descripcion": "Las dos ramas añaden el MISMO def con el MISMO cuerpo: el merge deja el método repetido y no pierde ninguno, así que el canal es identico y no rojo. Medido en 15 PRs reales (26-Nov-2026): 75 pares con el mismo nombre, 75 con cuerpo idéntico, 0 tests perdidos.",
+      "a": {
+        "tests/test_d.py": "import unittest\n\n\nclass Caso(unittest.TestCase):\n    def test_01_igual(self):\n        self.assertEqual(2 + 2, 4)\n"
+      },
+      "b": {
+        "tests/test_d.py": "import unittest\n\n\nclass Caso(unittest.TestCase):\n    def test_01_igual(self):\n        self.assertEqual(2 + 2, 4)\n"
+      },
+      "espera_identicos": [
+        [
+          "tests/test_d.py::Caso.test_01_igual",
+          "tests/test_d.py::Caso.test_01_igual"
+        ]
+      ],
+      "canales": [
+        "rojo",
+        "identico"
+      ]
+    },
+    {
+      "id": "mismo-nombre-cuerpo-distinto",
+      "descripcion": "Mismo nombre y cuerpo distinto: la huella del AST los separa y el segundo borra al primero. Es el falso negativo simétrico del caso anterior: distinguir idéntico de distinto sólo vale si el distinto sigue siendo rojo.",
+      "a": {
+        "tests/test_d.py": "import unittest\n\n\nclass Caso(unittest.TestCase):\n    def test_01_igual(self):\n        self.assertEqual(2 + 2, 4)\n"
+      },
+      "b": {
+        "tests/test_d.py": "import unittest\n\n\nclass Caso(unittest.TestCase):\n    def test_01_igual(self):\n        self.assertTrue(True)\n"
+      },
+      "espera_rojos": [
+        [
+          "tests/test_d.py::Caso.test_01_igual",
+          "tests/test_d.py::Caso.test_01_igual"
+        ]
+      ],
+      "canales": [
+        "rojo",
+        "identico"
+      ]
     }
   ]
 }
