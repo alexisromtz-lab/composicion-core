@@ -75,37 +75,63 @@ def sonda_shadow_guard(nucleo) -> Sonda:
 
 
 def sonda_governor(sombra) -> Sonda:
-    """``merge-lattice-governor``: sólo parejas del mismo archivo, sin avisos.
+    """``merge-lattice-governor``: parejas y rama sola, sin canal de avisos.
 
-    Replica ``parejas._simbolicas`` —intersección de archivos que las dos ramas
-    tocan, filtro por la base de la pareja y ``colisiones``— porque la sonda no
-    tiene un repositorio git donde llamar a esa función. No audita una rama
-    sola: su contrato es una pareja, y ese caso se declara no comparable.
+    Replica ``parejas._simbolicas`` y ``parejas.sola`` —intersección de archivos
+    que las dos ramas tocan, filtro por la base de la pareja, ``colisiones`` y
+    duplicado interno— porque la sonda no tiene un repositorio git donde llamar
+    a esas funciones. Con ``sombra.leer`` el archivo ilegible se publica como
+    NO_MEDIDO; con una versión anterior el canal se declara ausente en vez de
+    fingir que la herramienta lo emite.
     """
     tiene_nuevos = hasattr(sombra, "nuevos")
+    tiene_lectura = hasattr(sombra, "leer")
     con_nombre = "incluir_mismo_nombre" in getattr(sombra.colisiones, "__kwdefaults__", {}) or False
 
     def evaluar(caso: Caso) -> tuple[frozenset[str], frozenset[str], frozenset[str]]:
         rojos: set[str] = set()
+        ilegibles: set[str] = set()
         kwargs = {"incluir_mismo_nombre": True} if con_nombre else {}
+
+        def _metodos(texto: str, ruta: str) -> list:
+            if not tiene_lectura:
+                return sombra.metodos(texto)
+            encontrados, motivo = sombra.leer(texto, ruta)
+            if motivo:
+                ilegibles.add(ruta)
+                return []
+            return encontrados
+
+        base = {ruta: _metodos(texto, ruta) for ruta, texto in (caso.base or {}).items()}
+        propios: dict[str, dict[str, list]] = {}
+        for nombre, crudas in (("a", caso.a), ("b", caso.b)):
+            propios[nombre] = {}
+            for ruta, texto in crudas.items():
+                medidos = _metodos(texto, ruta)
+                propios[nombre][ruta] = (
+                    sombra.nuevos(base.get(ruta, []), medidos) if tiene_nuevos else medidos
+                )
+
+        def _anota(ruta: str, x, y) -> None:
+            rojos.add(etiqueta(ROJO, f"{ruta}::{x.rotulo()}", f"{ruta}::{y.rotulo()}"))
+
+        # Duplicado interno: el que pudo dejar un merge anterior dentro de la rama.
+        for archivos in propios.values():
+            for ruta, medidos in archivos.items():
+                for x, y in sombra.colisiones(medidos, medidos, **kwargs):
+                    _anota(ruta, x, y)
         for ruta in sorted(set(caso.a) & set(caso.b)):
-            metodos_a = sombra.metodos(caso.a[ruta])
-            metodos_b = sombra.metodos(caso.b[ruta])
-            if tiene_nuevos:
-                heredados = sombra.metodos((caso.base or {}).get(ruta, ""))
-                metodos_a = sombra.nuevos(heredados, metodos_a)
-                metodos_b = sombra.nuevos(heredados, metodos_b)
-            for x, y in sombra.colisiones(metodos_a, metodos_b, **kwargs):
-                rojos.add(etiqueta(ROJO, f"{ruta}::{x.rotulo()}", f"{ruta}::{y.rotulo()}"))
-        return frozenset(rojos), frozenset(), frozenset()
+            for x, y in sombra.colisiones(propios["a"].get(ruta, []), propios["b"].get(ruta, []), **kwargs):
+                _anota(ruta, x, y)
+        return frozenset(rojos), frozenset(), frozenset(ilegibles)
 
     return Sonda(
         "merge-lattice-governor",
         evaluar,
         soporta_base=tiene_nuevos,
         emite_avisos=False,
-        emite_no_medido=False,
-        audita_rama_sola=False,
+        emite_no_medido=tiene_lectura,
+        audita_rama_sola=True,
     )
 
 

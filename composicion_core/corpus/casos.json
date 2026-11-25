@@ -124,7 +124,7 @@
     },
     {
       "id": "byte-nulo",
-      "descripcion": "ast.parse lanza ValueError con un byte nulo: quien no lo captura no devuelve un veredicto, devuelve un traceback.",
+      "descripcion": "ast.parse no acepta un byte nulo: medido el 25-Nov-2026 en 3.12.13 y 3.14.8 sale como SyntaxError en las cuatro posiciones probadas; otras versiones del parser lo dan como ValueError. Quien no captura ninguno de los dos no devuelve un veredicto, devuelve un traceback.",
       "a": {
         "f2.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_01_x(self):\n        pass\n"
       },
@@ -173,7 +173,7 @@
     },
     {
       "id": "byte-nulo-veredicto",
-      "descripcion": "Byte nulo sin afirmar NO_MEDIDO: aquí es donde un ast.parse sin ValueError deja un traceback en vez de un veredicto.",
+      "descripcion": "Byte nulo sin afirmar NO_MEDIDO: aquí es donde un ast.parse que no capture SyntaxError ni ValueError deja un traceback en vez de un veredicto.",
       "a": {
         "f2.py": "import unittest\n\n\nclass Suite(unittest.TestCase):\n    def test_01_x(self):\n        pass\n"
       },

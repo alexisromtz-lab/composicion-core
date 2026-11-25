@@ -56,12 +56,15 @@ Medido el 25-Nov-2026 contra los dos paquetes hermanos:
 | herramienta | rojo | aviso | no_medido | discrepancias | no comparables |
 |---|---|---|---|---|---|
 | `composicion-core` | 10 | 10 | 10 | 0 | 0 |
-| `py-test-shadow-guard` 0.1.1 | 10 | 10 | 10 | 0 | 0 |
-| `merge-lattice-governor` 0.1.1 | 8 | 8 | 6 | 0 | 4 |
+| `py-test-shadow-guard` 0.1.2 | 10 | 10 | 10 | 0 | 0 |
+| `merge-lattice-governor` 0.1.2 | 9 | 9 | 9 | 0 | 1 |
 
-Las 4 filas no comparables del gobernador no son un verde: son su contrato,
-publicado. No audita una rama sola (compone parejas) y no emite canal de avisos
-ni de `NO_MEDIDO`.
+La única fila no comparable del gobernador no es un verde: es su contrato,
+publicado. **No emite canal de avisos** —el aviso global de ordinal compartido
+entre clases distintas—, así que el juez no tiene dónde puntuarlo. Los otros
+tres huecos que declaraba la versión 0.1.1 (auditar una rama sola, publicar
+`NO_MEDIDO` y detectar un duplicado interno de la propia rama) están cerrados y
+el juez los puntúa: 4 → 1.
 
 ## Contrato de marco declarado
 
@@ -84,7 +87,8 @@ marco**. Aquí no se puede escribir.
 1. Working tree, no historia: lee archivos, no un repositorio. La parte git la
    pone quien lo llama (los dos paquetes hermanos).
 2. Un archivo que no compila es `NO_MEDIDO`, nunca "cero métodos". En 3.11 un
-   byte nulo lanza `ValueError` y en 3.12+ `SyntaxError`; ambas se atrapan.
+   byte nulo llega como `SyntaxError` en 3.12.13 y 3.14.8, y como `ValueError` en
+   otras versiones del parser; ambas se atrapan.
 3. Sólo `def test*` con `ast`. Un test generado por metaprogramación no se ve.
 4. El corpus fija el predicado, no el gusto de cada proyecto: un equipo que
    numere distinto debe cambiar el corpus, no el código, y decirlo.

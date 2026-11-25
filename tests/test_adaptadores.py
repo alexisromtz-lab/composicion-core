@@ -53,6 +53,15 @@ class TestHermanos(unittest.TestCase):
             with self.subTest(caso=caso):
                 self.assertTrue(motivo.strip())
 
+    def test_el_gobernador_solo_deja_abierto_el_canal_de_avisos(self):
+        """Los otros tres huecos de 0.1.1 se cerraron; si vuelven, el juez lo dice."""
+        q = self._puntua("governor")
+        self.assertEqual(
+            {caso for caso, _ in q.no_comparables},
+            {"aviso-global"},
+            "rama sola, NO_MEDIDO y duplicado interno deben seguir siendo comparables",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

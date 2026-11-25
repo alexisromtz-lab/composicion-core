@@ -97,7 +97,11 @@ def _recorre(cuerpo: list[ast.stmt], prefijo: str, ruta: str, salida: list[Metod
 
 
 def leer(fuente: str, ruta: str) -> Fuente:
-    """AST de un archivo de tests. ``SyntaxError`` y ``ValueError`` (byte nulo) no explotan."""
+    """AST de un archivo de tests. ``SyntaxError`` y ``ValueError`` no explotan.
+
+    El byte nulo llega como ``SyntaxError`` en 3.12.13 y 3.14.8, y como ``ValueError``
+    en otras versiones del parser: se atrapan los dos porque el tipo no es el contrato.
+    """
     try:
         arbol = ast.parse(fuente, filename=ruta)
     except SyntaxError as exc:
