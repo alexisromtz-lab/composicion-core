@@ -12,3 +12,19 @@ jobs:
         with: { python-version: "${{ matrix.python }}" }
       - run: python -m unittest discover -s tests
       - run: python -m composicion_core --self-test
+      # El suelo se declara en pyproject (>=3.11); esto lo mide. El byte nulo no
+      # lo acepta el parser, pero el tipo de excepción cambia entre versiones.
+      - name: que excepcion lanza un byte nulo aqui
+        run: |
+          python - <<'PY'
+          import ast, sys
+          casos = {"inicio": "\x00import os\n", "medio": "import os\x00\n", "identificador": "x = 1\n\x00y = 2\n"}
+          for donde, fuente in casos.items():
+              try:
+                  ast.parse(fuente)
+              except BaseException as exc:
+                  print(f"{donde}: {type(exc).__name__}")
+              else:
+                  print(f"{donde}: NO LANZO")
+          print("python", ".".join(map(str, sys.version_info[:3])))
+          PY
